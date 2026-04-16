@@ -1,7 +1,7 @@
 package resources
 
 type Pod struct {
-	Name string
+	Name string `json:"name"`
 }
 
 func (p Pod) GetName() string { return p.Name }
