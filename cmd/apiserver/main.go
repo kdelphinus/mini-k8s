@@ -1,54 +1,23 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
+	"log"
+	"mini-k8s/pkg/api"
 	"mini-k8s/pkg/registry"
-	"mini-k8s/pkg/resources"
 	"net/http"
 )
 
 func main() {
-	// 저장소 생성
-	reg := registry.NewRegistry()
+	reg := registry.NewRegistry("./resources.json")
+	server := api.NewServer(reg)
 
-	http.HandleFunc("/api/v1/pods", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			// 저장소에서 전체 목록 조회
-			list := reg.List()
+	mux := http.NewServeMux()
 
-			// 목록을 JSON으로 변환
-			data, err := json.Marshal(list)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
+	mux.HandleFunc("GET /api/v1/pods", server.ListPods)
+	mux.HandleFunc("POST /api/v1/pods", server.CreatePod)
+	mux.HandleFunc("GET /api/v1/pods/{name}", server.GetPod)
 
-			// 응답 헤더를 설정하고 데이터 전송
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write(data)
-
-		case http.MethodPost:
-			body, _ := io.ReadAll(r.Body)
-			defer r.Body.Close() // 함수가 끝날 때 자동으로 실행
-
-			var p resources.Pod
-			// if문 안에서만 err 변수 유효
-			if err := json.Unmarshal(body, &p); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-
-			reg.Register(p)
-
-			w.WriteHeader(http.StatusCreated)
-			fmt.Fprintf(w, "Pod %s registered successfully!", p.GetName())
-		}
-	})
-
-	fmt.Println("서버가 8080 포트에서 시작됩니다.")
-	http.ListenAndServe(":8080", nil)
+	log.Println("🚀 mini-k8s API Server starting on :8080...")
+	// 에러 처리를 위해 log.Fatal로 감싸줍니다.
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
