@@ -144,3 +144,7 @@ $RECYCLE.BIN/
 
 # GitHub Copilot Instructions
 .github/copilot-instructions.md
+
+### Custom ###
+.idea
+resources.json
