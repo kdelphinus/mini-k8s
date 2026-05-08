@@ -39,8 +39,29 @@ func (r *Registry) load() {
 	if err != nil {
 		return // 파일 없으면 빈 상태로 시작
 	}
-	// TODO 인터페이스를 바로 Unmarshal 하는 것은 복잡하므로 로직 보강 필요
-	json.Unmarshal(data, &r.resources)
+
+	var tempMap map[string]json.RawMessage
+	if err := json.Unmarshal(data, &tempMap); err != nil {
+		return
+	}
+
+	for name, raw := range tempMap {
+		var typeChecker struct {
+			Kind string `json:"kind"`
+		}
+		json.Unmarshal(raw, &typeChecker)
+
+		switch typeChecker.Kind {
+		case "Pod":
+			var p resources.Pod
+			json.Unmarshal(raw, &p)
+			r.resources[name] = p
+		case "Service":
+			var s resources.Service
+			json.Unmarshal(raw, &s)
+			r.resources[name] = s
+		}
+	}
 }
 
 // Register 등록(Create/Update)
