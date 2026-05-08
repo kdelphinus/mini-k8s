@@ -47,16 +47,16 @@ func (r *Registry) load() {
 
 	for name, raw := range tempMap {
 		var typeChecker struct {
-			Kind string `json:"kind"`
+			Kind resources.ResourceKind `json:"kind"`
 		}
 		json.Unmarshal(raw, &typeChecker)
 
 		switch typeChecker.Kind {
-		case "Pod":
+		case resources.KindPod:
 			var p resources.Pod
 			json.Unmarshal(raw, &p)
 			r.resources[name] = p
-		case "Service":
+		case resources.KindService:
 			var s resources.Service
 			json.Unmarshal(raw, &s)
 			r.resources[name] = s
